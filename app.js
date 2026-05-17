@@ -471,24 +471,33 @@ startGameBtn.addEventListener("click", () => {
 });
 
 function startCountdown() {
+
     countdownRunning = false;
     doctorPhaseRunning = false;
     vampirePhaseRunning = false;
     votingRunning = false;
+
     readyListenerStarted = false;
     votesListenerStarted = false;
 
     firebase.database()
     .ref("rooms/" + currentRoom)
     .update({
-        countdown: true,
-        gameStarted: true,
-        phase: "countdown",
-        votes: null,
-        protectedPlayer: null,
-        killedPlayer: null,
-        winner: null
+
+        countdown:true,
+        gameStarted:true,
+
+        phase:"countdown",
+
+        votes:null,
+        protectedPlayer:null,
+        killedPlayer:null,
+
+        nightResult:null,
+        winner:null
+
     });
+
 }
 
 function runCountdown() {
@@ -575,6 +584,8 @@ function giveRoles() {
 
 continueBtn.addEventListener("click",()=>{
 
+    vampireTeam.innerHTML = "";
+
     roleScreen.classList.add("hidden");
 
     lobby.classList.add("hidden");
@@ -585,15 +596,15 @@ continueBtn.addEventListener("click",()=>{
 
     loadGameChat();
 
+    firebase.database()
+    .ref("rooms/" + currentRoom + "/players/" + currentPlayerKey)
+    .update({
+        ready:true
+    });
+
     if(isHost){
 
-        firebase.database()
-        .ref("rooms/" + currentRoom)
-        .update({
-
-            phase:"doctor"
-
-        });
+        waitAllPlayersReadyThenStart();
 
     }
 
