@@ -360,42 +360,46 @@ function openLobby(roomCode) {
 
 }
 
-function listenGamePhase() {
-    if (phaseListenerStarted) return;
-    phaseListenerStarted = true;
+function listenGamePhase(){
 
     firebase.database()
     .ref("rooms/" + currentRoom + "/phase")
-    .on("value", (snapshot) => {
+    .on("value",(snapshot)=>{
+
         const phase = snapshot.val();
 
-        if (!phase) return;
+        if(!phase) return;
 
-        console.log("FAZ:", phase);
+        disableSelections();
 
-        if (phase === "lobby") {
-            resetScreensToLobby();
-        }
+        if(phase === "doctor"){
 
-        if (phase === "roles") {
-            phaseText.textContent = "ROLLER";
-        }
-
-        if (phase === "doctor" && !doctorPhaseRunning) {
-            phaseText.textContent = "GECE";
             startDoctorPhase();
+
         }
 
-        if (phase === "vampire" && !vampirePhaseRunning) {
-            phaseText.textContent = "GECE";
+        else if(phase === "vampire"){
+
             startVampirePhase();
+
         }
 
-        if (phase === "vote" && !votingRunning) {
-            phaseText.textContent = "GÜNDÜZ";
-            startVotingPhase();
+        else if(phase === "result"){
+
+            voteScreen.classList.add("hidden");
+
+            nightScreen.classList.remove("hidden");
+
         }
+
+        else if(phase === "vote"){
+
+            startVotingPhase();
+
+        }
+
     });
+
 }
 
 leaveBtn.addEventListener("click", () => {
@@ -569,27 +573,31 @@ function giveRoles() {
     });
 }
 
-continueBtn.addEventListener("click", () => {
-    vampireTeam.innerHTML = "";
+continueBtn.addEventListener("click",()=>{
 
     roleScreen.classList.add("hidden");
+
     lobby.classList.add("hidden");
+
     gameScreen.classList.remove("hidden");
 
     loadGamePlayers();
+
     loadGameChat();
 
-    firebase.database()
-    .ref("rooms/" + currentRoom + "/players/" + currentPlayerKey)
-    .update({
-        ready: true
-    });
+    if(isHost){
 
-    if (isHost) {
-        waitAllPlayersReadyThenStart();
+        firebase.database()
+        .ref("rooms/" + currentRoom)
+        .update({
+
+            phase:"doctor"
+
+        });
+
     }
-});
 
+});
 function waitAllPlayersReadyThenStart() {
     if (!isHost || readyListenerStarted) return;
 
@@ -780,6 +788,7 @@ function enableDoctorSelection() {
 }
 
 function startVampirePhase() {
+
     if (vampirePhaseRunning) return;
 
     vampirePhaseRunning = true;
@@ -791,32 +800,57 @@ function startVampirePhase() {
     voteScreen.classList.add("hidden");
     nightScreen.classList.remove("hidden");
 
-    nightSubtitle.textContent = "Vampir gözünü açsın";
+    nightTitle.textContent = "GECE";
+
+    nightSubtitle.textContent =
+    "Vampir gözünü açsın";
 
     let time = 10;
+
     nightTimer.textContent = time;
 
     setTimeout(() => {
+
         if (currentRole === "Vampir") {
+
             enableVampireSelection();
+
         }
+
     }, 400);
 
     const interval = setInterval(() => {
+
         time--;
+
         nightTimer.textContent = time;
 
         if (time <= 0) {
+
             clearInterval(interval);
 
             vampirePhaseRunning = false;
+
             disableSelections();
 
             if (isHost) {
+
+                firebase.database()
+                .ref("rooms/" + currentRoom)
+                .update({
+
+                    phase: "result"
+
+                });
+
                 finishNight();
+
             }
+
         }
+
     }, 1000);
+
 }
 
 function enableVampireSelection(){
