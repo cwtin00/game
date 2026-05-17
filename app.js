@@ -86,7 +86,6 @@ function clearAllGameTimers(){
     votingRunning = false;
 }
 
-SONRA
 
 let phaseListenerStarted = false;
 let readyListenerStarted = false;
@@ -444,6 +443,17 @@ function listenGamePhase(){
             .classList.add("hidden");
 
             startVotingPhase();
+
+        }
+
+        else if(phase === "ended"){
+
+            clearAllGameTimers();
+
+            voteScreen.classList.add("hidden");
+            nightScreen.classList.add("hidden");
+            roleScreen.classList.add("hidden");
+            countdownScreen.classList.add("hidden");
 
         }
 
@@ -1387,16 +1397,22 @@ function checkWinCondition(callback) {
     });
 }
 
-function showWinScreen(text) {
-    if (isHost) {
+function showWinScreen(text){
+
+    clearAllGameTimers();
+
+    if(isHost){
+
         firebase.database()
         .ref("rooms/" + currentRoom)
         .update({
-            winner: text
+            winner:text,
+            phase:"ended"
         });
-    }
-}
 
+    }
+
+}
 restartGameBtn.addEventListener("click",()=>{
 
     if(!isHost){
@@ -1440,6 +1456,8 @@ restartGameBtn.addEventListener("click",()=>{
 });
 
 function resetScreensToLobby(){
+
+    clearAllGameTimers();
 
     winScreen.classList.add("hidden");
     gameScreen.classList.add("hidden");
