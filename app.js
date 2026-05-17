@@ -5,6 +5,7 @@ const countdownText = document.getElementById("countdownText");
 
 let currentPhase = "";
 let phaseLocked = false;
+let gamePhaseListenerActive = false;
 
 const vampireTeam = document.getElementById("vampireTeam");
 
@@ -392,6 +393,10 @@ function openLobby(roomCode) {
 
 function listenGamePhase(){
 
+    if(gamePhaseListenerActive) return;
+
+    gamePhaseListenerActive = true;
+
     firebase.database()
     .ref("rooms/" + currentRoom + "/phase")
     .on("value",(snapshot)=>{
@@ -405,6 +410,8 @@ function listenGamePhase(){
         }
 
         currentPhase = phase;
+
+        console.log("PHASE CHANGED:", phase);
 
         clearAllGameTimers();
 
@@ -1483,7 +1490,7 @@ restartGameBtn.addEventListener("click",()=>{
 function resetScreensToLobby(){
 
     clearAllGameTimers();
-
+    gamePhaseListenerActive = false;
     winScreen.classList.add("hidden");
     gameScreen.classList.add("hidden");
     nightScreen.classList.add("hidden");
