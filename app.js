@@ -3,7 +3,8 @@ console.log(firebase);
 const countdownScreen = document.getElementById("countdownScreen");
 const countdownText = document.getElementById("countdownText");
 
-let currentPhase = null;
+let currentPhase = "";
+let phaseLocked = false;
 
 const vampireTeam = document.getElementById("vampireTeam");
 
@@ -395,26 +396,23 @@ function listenGamePhase(){
     .ref("rooms/" + currentRoom + "/phase")
     .on("value",(snapshot)=>{
 
-const phase = snapshot.val();
+        const phase = snapshot.val();
 
-if(!phase) return;
+        if(!phase) return;
 
-if(currentPhase === phase){
-    return;
-}
+        if(currentPhase === phase){
+            return;
+        }
 
-currentPhase = phase;
+        currentPhase = phase;
 
-disableSelections();
+        clearAllGameTimers();
+
+        disableSelections();
+
+        phaseLocked = false;
 
         if(phase === "doctor"){
-
-            gameScreen.classList.remove("hidden");
-
-            lobby.classList.add("hidden");
-
-            document.querySelector(".container")
-            .classList.add("hidden");
 
             startDoctorPhase();
 
@@ -422,14 +420,13 @@ disableSelections();
 
         else if(phase === "vampire"){
 
-            gameScreen.classList.remove("hidden");
-
-            lobby.classList.add("hidden");
-
-            document.querySelector(".container")
-            .classList.add("hidden");
-
             startVampirePhase();
+
+        }
+
+        else if(phase === "vote"){
+
+            startVotingPhase();
 
         }
 
@@ -441,27 +438,9 @@ disableSelections();
 
         }
 
-        else if(phase === "vote"){
-
-            gameScreen.classList.remove("hidden");
-
-            lobby.classList.add("hidden");
-
-            document.querySelector(".container")
-            .classList.add("hidden");
-
-            startVotingPhase();
-
-        }
-
         else if(phase === "ended"){
 
             clearAllGameTimers();
-
-            voteScreen.classList.add("hidden");
-            nightScreen.classList.add("hidden");
-            roleScreen.classList.add("hidden");
-            countdownScreen.classList.add("hidden");
 
         }
 
@@ -1143,6 +1122,7 @@ function finishNight() {
 }
 
 function startVotingPhase(){
+
 
     if(votingRunning) return;
 
