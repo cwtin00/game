@@ -731,30 +731,70 @@ function startVampirePhase() {
     }, 1000);
 }
 
-function enableVampireSelection() {
-    document.querySelectorAll(".alive-player").forEach(playerDiv => {
-        if (playerDiv.classList.contains("dead-player")) return;
+function enableVampireSelection(){
 
-        if (playerDiv.dataset.role === "Vampir") {
-            return;
-        }
+    firebase.database()
+    .ref("rooms/" + currentRoom + "/players")
+    .once("value",(snapshot)=>{
 
-        playerDiv.classList.add("selectable-player");
+        const players = snapshot.val();
 
-        playerDiv.onclick = () => {
-            clearSelections();
+        document.querySelectorAll(".alive-player")
+        .forEach(playerDiv=>{
 
-            playerDiv.classList.add("selected-player");
+            if(playerDiv.classList.contains("dead-player")){
+                return;
+            }
 
-            const selectedName = playerDiv.dataset.name;
+            const playerName =
+            playerDiv.dataset.name;
 
-            firebase.database()
-            .ref("rooms/" + currentRoom)
-            .update({
-                killedPlayer: selectedName
+            let selectedPlayer = null;
+
+            Object.values(players).forEach(player=>{
+
+                if(player.name === playerName){
+
+                    selectedPlayer = player;
+
+                }
+
             });
-        };
+
+            if(!selectedPlayer){
+                return;
+            }
+
+            if(selectedPlayer.role === "Vampir"){
+                return;
+            }
+
+            playerDiv.classList.add(
+                "selectable-player"
+            );
+
+            playerDiv.onclick = ()=>{
+
+                clearSelections();
+
+                playerDiv.classList.add(
+                    "selected-player"
+                );
+
+                firebase.database()
+                .ref("rooms/" + currentRoom)
+                .update({
+
+                    killedPlayer:playerName
+
+                });
+
+            };
+
+        });
+
     });
+
 }
 
 function clearSelections() {
