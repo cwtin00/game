@@ -86,6 +86,8 @@ function clearAllGameTimers(){
     votingRunning = false;
 }
 
+SONRA
+
 let phaseListenerStarted = false;
 let readyListenerStarted = false;
 let votesListenerStarted = false;
@@ -784,8 +786,14 @@ function loadGameChat() {
     });
 }
 
-function startDoctorPhase() {
-    if (doctorPhaseRunning) return;
+function startDoctorPhase(){
+
+    if(doctorPhaseRunning) return;
+
+    if(doctorInterval){
+        clearInterval(doctorInterval);
+        doctorInterval = null;
+    }
 
     doctorPhaseRunning = true;
     vampirePhaseRunning = false;
@@ -803,32 +811,45 @@ function startDoctorPhase() {
     let time = 10;
     nightTimer.textContent = time;
 
-    setTimeout(() => {
-        if (currentRole === "Doktor") {
+    setTimeout(()=>{
+        if(currentRole === "Doktor"){
             enableDoctorSelection();
         }
-    }, 400);
+    },400);
 
-    const interval = setInterval(() => {
+    doctorInterval = setInterval(()=>{
+
         time--;
+
+        if(time < 0){
+            time = 0;
+        }
+
         nightTimer.textContent = time;
 
-        if (time <= 0) {
-            clearInterval(voteInterval);
-            voteInterval = null;
+        if(time <= 0){
+
+            clearInterval(doctorInterval);
+            doctorInterval = null;
 
             doctorPhaseRunning = false;
+
             disableSelections();
 
-            if (isHost) {
+            if(isHost){
+
                 firebase.database()
                 .ref("rooms/" + currentRoom)
                 .update({
-                    phase: "vampire"
+                    phase:"vampire"
                 });
+
             }
+
         }
-    }, 1000);
+
+    },1000);
+
 }
 
 function enableDoctorSelection() {
@@ -853,12 +874,18 @@ function enableDoctorSelection() {
     });
 }
 
-function startVampirePhase() {
+function startVampirePhase(){
 
-    if (vampirePhaseRunning) return;
+    if(vampirePhaseRunning) return;
+
+    if(vampireInterval){
+        clearInterval(vampireInterval);
+        vampireInterval = null;
+    }
 
     vampirePhaseRunning = true;
     doctorPhaseRunning = false;
+    votingRunning = false;
 
     clearSelections();
 
@@ -867,46 +894,42 @@ function startVampirePhase() {
     nightScreen.classList.remove("hidden");
 
     nightTitle.textContent = "GECE";
-
-    nightSubtitle.textContent =
-    "Vampir gözünü açsın";
+    nightSubtitle.textContent = "Vampir gözünü açsın";
 
     let time = 10;
-
     nightTimer.textContent = time;
 
-    setTimeout(() => {
-
-        if (currentRole === "Vampir") {
-
+    setTimeout(()=>{
+        if(currentRole === "Vampir"){
             enableVampireSelection();
-
         }
+    },400);
 
-    }, 400);
-
-   vampireInterval = setInterval(() => {
+    vampireInterval = setInterval(()=>{
 
         time--;
 
+        if(time < 0){
+            time = 0;
+        }
+
         nightTimer.textContent = time;
 
-        if (time <= 0) {
+        if(time <= 0){
 
-            clearInterval(interval);
+            clearInterval(vampireInterval);
+            vampireInterval = null;
 
             vampirePhaseRunning = false;
 
             disableSelections();
 
-            if (isHost) {
+            if(isHost){
 
                 firebase.database()
                 .ref("rooms/" + currentRoom)
                 .update({
-
-                    phase: "result"
-
+                    phase:"result"
                 });
 
                 finishNight();
@@ -915,7 +938,7 @@ function startVampirePhase() {
 
         }
 
-    }, 1000);
+    },1000);
 
 }
 
@@ -1087,8 +1110,14 @@ function finishNight() {
 
 }
 
-function startVotingPhase() {
-    if (votingRunning) return;
+function startVotingPhase(){
+
+    if(votingRunning) return;
+
+    if(voteInterval){
+        clearInterval(voteInterval);
+        voteInterval = null;
+    }
 
     votingRunning = true;
     doctorPhaseRunning = false;
@@ -1106,22 +1135,32 @@ function startVotingPhase() {
 
     loadVotePlayers();
 
-     voteInterval = setInterval(() => {
+    voteInterval = setInterval(()=>{
+
         time--;
+
+        if(time < 0){
+            time = 0;
+        }
+
         voteTimer.textContent = time;
 
-        if (time <= 0) {
-            clearInterval(interval);
+        if(time <= 0){
+
+            clearInterval(voteInterval);
+            voteInterval = null;
 
             votingRunning = false;
 
-            if (isHost) {
+            if(isHost){
                 finishVoting();
             }
-        }
-    }, 1000);
-}
 
+        }
+
+    },1000);
+
+}
 function loadVotePlayers() {
     firebase.database()
     .ref("rooms/" + currentRoom + "/players")
