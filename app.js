@@ -647,24 +647,42 @@ function startDoctorPhase() {
     }, 1000);
 }
 
-function enableDoctorSelection() {
-    document.querySelectorAll(".alive-player").forEach(playerDiv => {
-        if (playerDiv.classList.contains("dead-player")) return;
+function enableDoctorSelection(){
+
+    document.querySelectorAll(".alive-player")
+    .forEach(playerDiv=>{
+
+        if(playerDiv.classList.contains("dead-player")) return;
 
         playerDiv.classList.add("selectable-player");
 
-        playerDiv.onclick = () => {
-            const selectedName = playerDiv.dataset.name;
+        playerDiv.onclick = ()=>{
+
+            document.querySelectorAll(".alive-player")
+            .forEach(div=>{
+
+                div.classList.remove("selected-player");
+
+            });
+
+            playerDiv.classList.add("selected-player");
+
+            const selectedName =
+            playerDiv.dataset.name;
 
             firebase.database()
             .ref("rooms/" + currentRoom)
             .update({
-                protectedPlayer: selectedName
-            });
-        };
-    });
-}
 
+                protectedPlayer:selectedName
+
+            });
+
+        };
+
+    });
+
+}
 function startVampirePhase() {
     if (vampirePhaseRunning) return;
 
@@ -704,26 +722,45 @@ function startVampirePhase() {
     }, 1000);
 }
 
-function enableVampireSelection() {
-    document.querySelectorAll(".alive-player").forEach(playerDiv => {
-        if (playerDiv.classList.contains("dead-player")) return;
+function enableVampireSelection(){
 
-        if (playerDiv.dataset.role === "Vampir") {
+    document.querySelectorAll(".alive-player")
+    .forEach(playerDiv=>{
+
+        if(playerDiv.classList.contains("dead-player")) return;
+
+        if(playerDiv.dataset.role === "Vampir"){
             return;
         }
 
         playerDiv.classList.add("selectable-player");
 
-        playerDiv.onclick = () => {
-            const selectedName = playerDiv.dataset.name;
+        playerDiv.onclick = ()=>{
+
+            document.querySelectorAll(".alive-player")
+            .forEach(div=>{
+
+                div.classList.remove("selected-player");
+
+            });
+
+            playerDiv.classList.add("selected-player");
+
+            const selectedName =
+            playerDiv.dataset.name;
 
             firebase.database()
             .ref("rooms/" + currentRoom)
             .update({
-                killedPlayer: selectedName
+
+                killedPlayer:selectedName
+
             });
+
         };
+
     });
+
 }
 
 function disableSelections() {
