@@ -374,11 +374,25 @@ function listenGamePhase(){
 
         if(phase === "doctor"){
 
+            gameScreen.classList.remove("hidden");
+
+            lobby.classList.add("hidden");
+
+            document.querySelector(".container")
+            .classList.add("hidden");
+
             startDoctorPhase();
 
         }
 
         else if(phase === "vampire"){
+
+            gameScreen.classList.remove("hidden");
+
+            lobby.classList.add("hidden");
+
+            document.querySelector(".container")
+            .classList.add("hidden");
 
             startVampirePhase();
 
@@ -394,25 +408,22 @@ function listenGamePhase(){
 
         else if(phase === "vote"){
 
+            gameScreen.classList.remove("hidden");
+
+            lobby.classList.add("hidden");
+
+            document.querySelector(".container")
+            .classList.add("hidden");
+
             startVotingPhase();
 
         }
 
         else if(phase === "lobby"){
 
-    winScreen.classList.add("hidden");
-    voteScreen.classList.add("hidden");
-    nightScreen.classList.add("hidden");
-    roleScreen.classList.add("hidden");
+            resetScreensToLobby();
 
-    gameScreen.classList.add("hidden");
-
-    document.querySelector(".container")
-    .classList.remove("hidden");
-
-    lobby.classList.remove("hidden");
-
-}
+        }
 
     });
 
@@ -1333,16 +1344,14 @@ restartGameBtn.addEventListener("click",()=>{
 
         const players = snapshot.val();
 
-        Object.entries(players).forEach(([key, player])=>{
+        Object.entries(players).forEach(([key])=>{
 
             firebase.database()
             .ref("rooms/" + currentRoom + "/players/" + key)
             .update({
-
                 dead:false,
                 role:null,
                 ready:false
-
             });
 
         });
@@ -1350,36 +1359,45 @@ restartGameBtn.addEventListener("click",()=>{
         firebase.database()
         .ref("rooms/" + currentRoom)
         .update({
-
             countdown:false,
             gameStarted:false,
-
             phase:"lobby",
-
             votes:null,
             protectedPlayer:null,
             killedPlayer:null,
             nightResult:null,
             winner:null
-
         });
-
-        countdownRunning = false;
-        doctorPhaseRunning = false;
-        vampirePhaseRunning = false;
-        votingRunning = false;
 
     });
 
 });
 
-function resetScreensToLobby() {
+function resetScreensToLobby(){
+
     winScreen.classList.add("hidden");
     gameScreen.classList.add("hidden");
     nightScreen.classList.add("hidden");
     voteScreen.classList.add("hidden");
     roleScreen.classList.add("hidden");
+    countdownScreen.classList.add("hidden");
+
+    document.querySelector(".container")
+    .classList.remove("hidden");
+
     lobby.classList.remove("hidden");
+
+    vampireTeam.innerHTML = "";
+    voteResult.innerHTML = "";
+
+    currentRole = null;
+
+    countdownRunning = false;
+    doctorPhaseRunning = false;
+    vampirePhaseRunning = false;
+    votingRunning = false;
+    readyListenerStarted = false;
+    votesListenerStarted = false;
 }
 
 function loadVampireTeam() {
