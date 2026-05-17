@@ -6,7 +6,7 @@ const countdownText = document.getElementById("countdownText");
 let currentPhase = "";
 let phaseLocked = false;
 let gamePhaseListenerActive = false;
-let roleShown = false;
+
 
 const vampireTeam = document.getElementById("vampireTeam");
 
