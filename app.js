@@ -60,6 +60,32 @@ let doctorPhaseRunning = false;
 let vampirePhaseRunning = false;
 let votingRunning = false;
 
+let doctorInterval = null;
+let vampireInterval = null;
+let voteInterval = null;
+
+function clearAllGameTimers(){
+
+    if(doctorInterval){
+        clearInterval(doctorInterval);
+        doctorInterval = null;
+    }
+
+    if(vampireInterval){
+        clearInterval(vampireInterval);
+        vampireInterval = null;
+    }
+
+    if(voteInterval){
+        clearInterval(voteInterval);
+        voteInterval = null;
+    }
+
+    doctorPhaseRunning = false;
+    vampirePhaseRunning = false;
+    votingRunning = false;
+}
+
 let phaseListenerStarted = false;
 let readyListenerStarted = false;
 let votesListenerStarted = false;
@@ -788,7 +814,8 @@ function startDoctorPhase() {
         nightTimer.textContent = time;
 
         if (time <= 0) {
-            clearInterval(interval);
+            clearInterval(voteInterval);
+            voteInterval = null;
 
             doctorPhaseRunning = false;
             disableSelections();
@@ -858,7 +885,7 @@ function startVampirePhase() {
 
     }, 400);
 
-    const interval = setInterval(() => {
+   vampireInterval = setInterval(() => {
 
         time--;
 
@@ -1079,7 +1106,7 @@ function startVotingPhase() {
 
     loadVotePlayers();
 
-    const interval = setInterval(() => {
+     voteInterval = setInterval(() => {
         time--;
         voteTimer.textContent = time;
 
