@@ -6,6 +6,7 @@ const countdownText = document.getElementById("countdownText");
 let currentPhase = "";
 let phaseLocked = false;
 let gamePhaseListenerActive = false;
+let roleShown = false;
 
 const vampireTeam = document.getElementById("vampireTeam");
 
@@ -280,7 +281,9 @@ function openLobby(roomCode) {
 
         const data = snapshot.val();
 
-        if (data && data.role) {
+        if (data && data.role && !roleShown) {
+
+            roleShown = true;
 
             currentRole = data.role;
 
@@ -1490,6 +1493,7 @@ restartGameBtn.addEventListener("click",()=>{
 function resetScreensToLobby(){
 
     clearAllGameTimers();
+    roleShown = false;
     gamePhaseListenerActive = false;
     winScreen.classList.add("hidden");
     gameScreen.classList.add("hidden");
