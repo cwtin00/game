@@ -830,9 +830,23 @@ function startDoctorPhase(){
     nightTimer.textContent = time;
 
     setTimeout(()=>{
-        if(currentRole === "Doktor"){
-            enableDoctorSelection();
-        }
+
+        firebase.database()
+        .ref("rooms/" + currentRoom + "/players/" + currentPlayerKey)
+        .once("value",(snapshot)=>{
+
+            const me = snapshot.val();
+
+            if(
+                currentRole === "Doktor" &&
+                me &&
+                !me.dead
+            ){
+                enableDoctorSelection();
+            }
+
+        });
+
     },400);
 
     doctorInterval = setInterval(()=>{
@@ -1180,14 +1194,17 @@ function startVotingPhase(){
 
 }
 function loadVotePlayers() {
+
     firebase.database()
     .ref("rooms/" + currentRoom + "/players")
     .once("value", (snapshot) => {
+
         votePlayers.innerHTML = "";
 
         const players = snapshot.val();
 
         Object.entries(players).forEach(([key, player]) => {
+
             if (player.dead) return;
 
             const div = document.createElement("div");
@@ -1200,21 +1217,41 @@ function loadVotePlayers() {
             `;
 
             div.onclick = () => {
-                firebase.database()
-                .ref("rooms/" + currentRoom + "/votes/" + currentPlayerKey)
-                .set(player.name);
 
-                document.querySelectorAll(".vote-player").forEach(el => {
-                    el.style.pointerEvents = "none";
-                    el.style.opacity = "0.6";
+                firebase.database()
+                .ref("rooms/" + currentRoom + "/players/" + currentPlayerKey)
+                .once("value",(snapshot)=>{
+
+                    const me = snapshot.val();
+
+                    if(!me || me.dead){
+                        return;
+                    }
+
+                    firebase.database()
+                    .ref("rooms/" + currentRoom + "/votes/" + currentPlayerKey)
+                    .set(player.name);
+
+                    document.querySelectorAll(".vote-player")
+                    .forEach(el => {
+
+                        el.style.pointerEvents = "none";
+                        el.style.opacity = "0.6";
+
+                    });
+
                 });
+
             };
 
             votePlayers.appendChild(div);
+
         });
 
         listenVotes();
+
     });
+
 }
 
 function listenVotes() {
