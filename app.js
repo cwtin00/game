@@ -398,6 +398,22 @@ function listenGamePhase(){
 
         }
 
+        else if(phase === "lobby"){
+
+    winScreen.classList.add("hidden");
+    voteScreen.classList.add("hidden");
+    nightScreen.classList.add("hidden");
+    roleScreen.classList.add("hidden");
+
+    gameScreen.classList.add("hidden");
+
+    document.querySelector(".container")
+    .classList.remove("hidden");
+
+    lobby.classList.remove("hidden");
+
+}
+
     });
 
 }
@@ -1304,54 +1320,57 @@ function showWinScreen(text) {
     }
 }
 
-restartGameBtn.addEventListener("click", () => {
-    if (!isHost) {
+restartGameBtn.addEventListener("click",()=>{
+
+    if(!isHost){
         alert("Sadece host yeniden başlatabilir");
         return;
     }
 
     firebase.database()
     .ref("rooms/" + currentRoom + "/players")
-    .once("value", (snapshot) => {
+    .once("value",(snapshot)=>{
+
         const players = snapshot.val();
 
-        Object.entries(players).forEach(([key, player]) => {
+        Object.entries(players).forEach(([key, player])=>{
+
             firebase.database()
             .ref("rooms/" + currentRoom + "/players/" + key)
             .update({
-                dead: false,
-                role: null,
-                ready: false
+
+                dead:false,
+                role:null,
+                ready:false
+
             });
+
         });
 
         firebase.database()
         .ref("rooms/" + currentRoom)
         .update({
-            votes: null,
-            protectedPlayer: null,
-            killedPlayer: null,
-            winner: null,
-            countdown: false,
-            gameStarted: false,
-            phase: "lobby"
+
+            countdown:false,
+            gameStarted:false,
+
+            phase:"lobby",
+
+            votes:null,
+            protectedPlayer:null,
+            killedPlayer:null,
+            nightResult:null,
+            winner:null
+
         });
 
-        currentRole = null;
         countdownRunning = false;
         doctorPhaseRunning = false;
         vampirePhaseRunning = false;
         votingRunning = false;
-        readyListenerStarted = false;
-        votesListenerStarted = false;
 
-        voteResult.innerHTML = "";
-        vampireTeam.innerHTML = "";
-
-        winScreen.classList.add("hidden");
-        gameScreen.classList.add("hidden");
-        lobby.classList.remove("hidden");
     });
+
 });
 
 function resetScreensToLobby() {
