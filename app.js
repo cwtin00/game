@@ -58,6 +58,7 @@ let currentRoom = null;
 let currentPlayerName = null;
 let currentPlayerKey = null;
 let currentRole = null;
+let roleShown = false;
 let isHost = false;
 
 let countdownRunning = false;
@@ -389,6 +390,25 @@ function openLobby(roomCode) {
     });
 
     loadChat();
+
+    firebase.database()
+.ref("rooms/" + roomCode + "/voteResultText")
+.on("value",(snapshot)=>{
+
+    const result = snapshot.val();
+
+    if(!result) return;
+
+    voteResult.innerHTML = `
+        <h2 style="
+            color:#ff2b2b;
+            margin-top:20px;
+        ">
+            ${escapeHTML(result)}
+        </h2>
+    `;
+
+});
 
     listenGamePhase();
 
@@ -997,6 +1017,12 @@ function enableVampireSelection(){
                 return;
             }
 
+            // Ölü ise seçilemez
+            if(selectedPlayer.dead){
+                return;
+            }
+
+            // Vampir vampiri öldüremez
             if(selectedPlayer.role === "Vampir"){
                 return;
             }
@@ -1007,17 +1033,45 @@ function enableVampireSelection(){
 
             playerDiv.onclick = ()=>{
 
-                clearSelections();
-
-                playerDiv.classList.add(
-                    "selected-player"
-                );
-
+                // Tıklayınca tekrar firebase kontrolü
                 firebase.database()
-                .ref("rooms/" + currentRoom)
-                .update({
+                .ref("rooms/" + currentRoom + "/players")
+                .once("value",(snap)=>{
 
-                    killedPlayer:playerName
+                    const latestPlayers = snap.val();
+
+                    let latestPlayer = null;
+
+                    Object.values(latestPlayers).forEach(p=>{
+
+                        if(p.name === playerName){
+                            latestPlayer = p;
+                        }
+
+                    });
+
+                    if(!latestPlayer){
+                        return;
+                    }
+
+                    // Bu sırada öldüyse engelle
+                    if(latestPlayer.dead){
+                        return;
+                    }
+
+                    clearSelections();
+
+                    playerDiv.classList.add(
+                        "selected-player"
+                    );
+
+                    firebase.database()
+                    .ref("rooms/" + currentRoom)
+                    .update({
+
+                        killedPlayer:playerName
+
+                    });
 
                 });
 
@@ -1337,22 +1391,31 @@ function finishVoting() {
 
         const tied = sameCount > 1;
 
-        if (tied) {
-            voteResult.innerHTML = `
-                <h2 style="color:white;margin-top:20px;">
-                    Oylar eşit çıktı. Kimse ölmedi.
-                </h2>
-            `;
-        }
-        else if (votedPlayer) {
-            voteResult.innerHTML = `
-                <h2 style="color:#ff2b2b;margin-top:20px;">
-                    ${escapeHTML(votedPlayer)} ASILDI
-                </h2>
-            `;
+if (tied) {
 
-            killPlayerByName(votedPlayer);
-        }
+    const resultText =
+    "Oylar eşit çıktı. Kimse ölmedi.";
+
+    firebase.database()
+    .ref("rooms/" + currentRoom)
+    .update({
+        voteResultText: resultText
+    });
+
+}
+else if (votedPlayer) {
+
+    const resultText =
+    votedPlayer + " ASILDI";
+
+    firebase.database()
+    .ref("rooms/" + currentRoom)
+    .update({
+        voteResultText: resultText
+    });
+
+    killPlayerByName(votedPlayer);
+}
 
         setTimeout(() => {
             checkWinCondition((gameEnded) => {
