@@ -87,6 +87,7 @@ createRoomBtn.addEventListener("click", () => {
         votes: null,
         protectedPlayer: null,
         killedPlayer: null,
+        winner: null,
         players: {
             host: {
                 name: playerName,
@@ -223,13 +224,16 @@ function openLobby(roomCode) {
             if (data.role === "Vampir") {
                 roleTitle.style.color = "#ff1e1e";
                 roleDescription.textContent = "Gece köylülere saldır.";
-                loadVampireTeam();
-            } 
+
+                setTimeout(() => {
+                    loadVampireTeam();
+                }, 400);
+            }
             else if (data.role === "Doktor") {
                 roleTitle.style.color = "#00d26a";
                 roleDescription.textContent = "Bir kişiyi koru.";
                 vampireTeam.innerHTML = "";
-            } 
+            }
             else {
                 roleTitle.style.color = "white";
                 roleDescription.textContent = "Vampiri bul.";
@@ -246,6 +250,22 @@ function openLobby(roomCode) {
         if (started && !countdownRunning) {
             runCountdown();
         }
+    });
+
+    firebase.database()
+    .ref("rooms/" + roomCode + "/winner")
+    .on("value", (snapshot) => {
+        const winner = snapshot.val();
+
+        if (!winner) return;
+
+        voteScreen.classList.add("hidden");
+        nightScreen.classList.add("hidden");
+        roleScreen.classList.add("hidden");
+        countdownScreen.classList.add("hidden");
+
+        winScreen.classList.remove("hidden");
+        winTitle.textContent = winner;
     });
 
     loadChat();
@@ -374,7 +394,8 @@ function startCountdown() {
         phase: "countdown",
         votes: null,
         protectedPlayer: null,
-        killedPlayer: null
+        killedPlayer: null,
+        winner: null
     });
 }
 
@@ -431,7 +452,7 @@ function giveRoles() {
 
             if (vampireKeys.includes(key)) {
                 role = "Vampir";
-            } 
+            }
             else if (key === doctorKey) {
                 role = "Doktor";
             }
@@ -452,7 +473,8 @@ function giveRoles() {
             countdown: false,
             votes: null,
             protectedPlayer: null,
-            killedPlayer: null
+            killedPlayer: null,
+            winner: null
         });
 
         waitAllPlayersReadyThenStart();
@@ -586,7 +608,6 @@ function loadGameChat() {
         if (data) {
             Object.values(data).forEach(msg => {
                 const div = document.createElement("div");
-
                 div.classList.add("game-message");
 
                 div.innerHTML = `
@@ -609,10 +630,11 @@ function startDoctorPhase() {
     vampirePhaseRunning = false;
     votingRunning = false;
 
+    clearSelections();
+
     roleScreen.classList.add("hidden");
     voteScreen.classList.add("hidden");
     nightScreen.classList.remove("hidden");
-    alivePlayers.style.zIndex = "10000";
 
     nightTitle.textContent = "GECE";
     nightSubtitle.textContent = "Doktor gözünü açsın";
@@ -647,52 +669,39 @@ function startDoctorPhase() {
     }, 1000);
 }
 
-function enableDoctorSelection(){
-
-    document.querySelectorAll(".alive-player")
-    .forEach(playerDiv=>{
-
-        if(playerDiv.classList.contains("dead-player")) return;
+function enableDoctorSelection() {
+    document.querySelectorAll(".alive-player").forEach(playerDiv => {
+        if (playerDiv.classList.contains("dead-player")) return;
 
         playerDiv.classList.add("selectable-player");
 
-        playerDiv.onclick = ()=>{
-
-            document.querySelectorAll(".alive-player")
-            .forEach(div=>{
-
-                div.classList.remove("selected-player");
-
-            });
+        playerDiv.onclick = () => {
+            clearSelections();
 
             playerDiv.classList.add("selected-player");
 
-            const selectedName =
-            playerDiv.dataset.name;
+            const selectedName = playerDiv.dataset.name;
 
             firebase.database()
             .ref("rooms/" + currentRoom)
             .update({
-
-                protectedPlayer:selectedName
-
+                protectedPlayer: selectedName
             });
-
         };
-
     });
-
 }
+
 function startVampirePhase() {
     if (vampirePhaseRunning) return;
 
     vampirePhaseRunning = true;
     doctorPhaseRunning = false;
 
+    clearSelections();
+
     roleScreen.classList.add("hidden");
     voteScreen.classList.add("hidden");
     nightScreen.classList.remove("hidden");
-    alivePlayers.style.zIndex = "10000";
 
     nightSubtitle.textContent = "Vampir gözünü açsın";
 
@@ -722,50 +731,42 @@ function startVampirePhase() {
     }, 1000);
 }
 
-function enableVampireSelection(){
+function enableVampireSelection() {
+    document.querySelectorAll(".alive-player").forEach(playerDiv => {
+        if (playerDiv.classList.contains("dead-player")) return;
 
-    document.querySelectorAll(".alive-player")
-    .forEach(playerDiv=>{
-
-        if(playerDiv.classList.contains("dead-player")) return;
-
-        if(playerDiv.dataset.role === "Vampir"){
+        if (playerDiv.dataset.role === "Vampir") {
             return;
         }
 
         playerDiv.classList.add("selectable-player");
 
-        playerDiv.onclick = ()=>{
-
-            document.querySelectorAll(".alive-player")
-            .forEach(div=>{
-
-                div.classList.remove("selected-player");
-
-            });
+        playerDiv.onclick = () => {
+            clearSelections();
 
             playerDiv.classList.add("selected-player");
 
-            const selectedName =
-            playerDiv.dataset.name;
+            const selectedName = playerDiv.dataset.name;
 
             firebase.database()
             .ref("rooms/" + currentRoom)
             .update({
-
-                killedPlayer:selectedName
-
+                killedPlayer: selectedName
             });
-
         };
-
     });
+}
 
+function clearSelections() {
+    document.querySelectorAll(".alive-player").forEach(playerDiv => {
+        playerDiv.classList.remove("selected-player");
+    });
 }
 
 function disableSelections() {
     document.querySelectorAll(".alive-player").forEach(playerDiv => {
         playerDiv.classList.remove("selectable-player");
+        playerDiv.classList.remove("selected-player");
         playerDiv.onclick = null;
     });
 }
@@ -782,11 +783,11 @@ function finishNight() {
         if (protectedPlayer && killedPlayer && protectedPlayer === killedPlayer) {
             nightSubtitle.textContent =
             killedPlayer + " az kalsın öldürülüyordu fakat doktor korudu";
-        } 
+        }
         else if (killedPlayer) {
             nightSubtitle.textContent = killedPlayer + " öldürüldü";
             killPlayerByName(killedPlayer);
-        } 
+        }
         else {
             nightSubtitle.textContent = "Kimse ölmedi";
         }
@@ -820,6 +821,8 @@ function startVotingPhase() {
     doctorPhaseRunning = false;
     vampirePhaseRunning = false;
     votesListenerStarted = false;
+
+    clearSelections();
 
     voteScreen.classList.remove("hidden");
     nightScreen.classList.add("hidden");
@@ -983,7 +986,7 @@ function finishVoting() {
                     Oylar eşit çıktı. Kimse ölmedi.
                 </h2>
             `;
-        } 
+        }
         else if (votedPlayer) {
             voteResult.innerHTML = `
                 <h2 style="color:#ff2b2b;margin-top:20px;">
@@ -1050,7 +1053,7 @@ function checkWinCondition(callback) {
 
             if (player.role === "Vampir") {
                 aliveVampires++;
-            } 
+            }
             else {
                 aliveVillagers++;
             }
@@ -1073,12 +1076,13 @@ function checkWinCondition(callback) {
 }
 
 function showWinScreen(text) {
-    voteScreen.classList.add("hidden");
-    nightScreen.classList.add("hidden");
-    roleScreen.classList.add("hidden");
-
-    winScreen.classList.remove("hidden");
-    winTitle.textContent = text;
+    if (isHost) {
+        firebase.database()
+        .ref("rooms/" + currentRoom)
+        .update({
+            winner: text
+        });
+    }
 }
 
 restartGameBtn.addEventListener("click", () => {
@@ -1108,6 +1112,7 @@ restartGameBtn.addEventListener("click", () => {
             votes: null,
             protectedPlayer: null,
             killedPlayer: null,
+            winner: null,
             countdown: false,
             gameStarted: false,
             phase: "lobby"

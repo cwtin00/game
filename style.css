@@ -709,3 +709,10 @@ body{
 
     transform:scale(1.03);
 }
+
+.selected-player{
+    border:2px solid #00ff88 !important;
+    background:rgba(0,255,136,0.15) !important;
+    box-shadow:0 0 25px rgba(0,255,136,0.7);
+    transform:scale(1.03);
+}
