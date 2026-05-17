@@ -590,6 +590,9 @@ continueBtn.addEventListener("click",()=>{
 
     lobby.classList.add("hidden");
 
+    document.querySelector(".container")
+    .classList.add("hidden");
+
     gameScreen.classList.remove("hidden");
 
     loadGamePlayers();
@@ -603,9 +606,7 @@ continueBtn.addEventListener("click",()=>{
     });
 
     if(isHost){
-
         waitAllPlayersReadyThenStart();
-
     }
 
 });
