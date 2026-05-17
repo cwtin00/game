@@ -3,6 +3,8 @@ console.log(firebase);
 const countdownScreen = document.getElementById("countdownScreen");
 const countdownText = document.getElementById("countdownText");
 
+let currentPhase = null;
+
 const vampireTeam = document.getElementById("vampireTeam");
 
 const nightScreen = document.getElementById("nightScreen");
@@ -393,11 +395,17 @@ function listenGamePhase(){
     .ref("rooms/" + currentRoom + "/phase")
     .on("value",(snapshot)=>{
 
-        const phase = snapshot.val();
+const phase = snapshot.val();
 
-        if(!phase) return;
+if(!phase) return;
 
-        disableSelections();
+if(currentPhase === phase){
+    return;
+}
+
+currentPhase = phase;
+
+disableSelections();
 
         if(phase === "doctor"){
 
