@@ -160,6 +160,7 @@ joinRoomBtn.addEventListener("click", () => {
 });
 
 function openLobby(roomCode) {
+
     currentRoom = roomCode;
 
     lobby.classList.remove("hidden");
@@ -168,93 +169,162 @@ function openLobby(roomCode) {
     firebase.database()
     .ref("rooms/" + roomCode + "/players")
     .on("value", (snapshot) => {
+
         playerList.innerHTML = "";
 
         const data = snapshot.val();
 
         if (data) {
+
             Object.entries(data).forEach(([key, player]) => {
-                const li = document.createElement("li");
+
+                const li =
+                document.createElement("li");
+
                 li.classList.add("player-item");
 
-                const nameSpan = document.createElement("span");
-                nameSpan.textContent = player.name;
+                const nameSpan =
+                document.createElement("span");
+
+                nameSpan.textContent =
+                player.name;
 
                 li.appendChild(nameSpan);
 
-                if (isHost && player.name !== currentPlayerName) {
-                    const kickBtn = document.createElement("button");
+                if (
+                    isHost &&
+                    player.name !== currentPlayerName
+                ) {
+
+                    const kickBtn =
+                    document.createElement("button");
+
                     kickBtn.textContent = "❌";
+
                     kickBtn.classList.add("kick-btn");
 
                     kickBtn.addEventListener("click", () => {
+
                         firebase.database()
-                        .ref("rooms/" + currentRoom + "/players/" + key)
+                        .ref(
+                            "rooms/" +
+                            currentRoom +
+                            "/players/" +
+                            key
+                        )
                         .remove();
+
                     });
 
                     li.appendChild(kickBtn);
+
                 }
 
                 playerList.appendChild(li);
+
             });
+
         }
+
     });
 
     firebase.database()
-    .ref("rooms/" + roomCode + "/players/" + currentPlayerKey)
+    .ref(
+        "rooms/" +
+        roomCode +
+        "/players/" +
+        currentPlayerKey
+    )
     .on("value", (snapshot) => {
+
         if (!snapshot.exists()) {
+
             alert("Host seni odadan attı");
+
             location.reload();
+
             return;
+
         }
 
         const data = snapshot.val();
 
         if (data && data.role) {
+
             currentRole = data.role;
 
             roleScreen.classList.remove("hidden");
+
             nightScreen.classList.add("hidden");
             voteScreen.classList.add("hidden");
 
             roleTitle.textContent = data.role;
 
             if (data.role === "Vampir") {
-                roleTitle.style.color = "#ff1e1e";
-                roleDescription.textContent = "Gece köylülere saldır.";
+
+                roleTitle.style.color =
+                "#ff1e1e";
+
+                roleDescription.textContent =
+                "Gece köylülere saldır.";
 
                 setTimeout(() => {
+
                     loadVampireTeam();
+
                 }, 400);
+
             }
+
             else if (data.role === "Doktor") {
-                roleTitle.style.color = "#00d26a";
-                roleDescription.textContent = "Bir kişiyi koru.";
+
+                roleTitle.style.color =
+                "#00d26a";
+
+                roleDescription.textContent =
+                "Bir kişiyi koru.";
+
                 vampireTeam.innerHTML = "";
+
             }
+
             else {
-                roleTitle.style.color = "white";
-                roleDescription.textContent = "Vampiri bul.";
+
+                roleTitle.style.color =
+                "white";
+
+                roleDescription.textContent =
+                "Vampiri bul.";
+
                 vampireTeam.innerHTML = "";
+
             }
+
         }
+
     });
 
     firebase.database()
     .ref("rooms/" + roomCode + "/countdown")
     .on("value", (snapshot) => {
+
         const started = snapshot.val();
 
-        if (started && !countdownRunning) {
+        if (
+            started &&
+            !countdownRunning
+        ) {
+
             runCountdown();
+
         }
+
     });
 
     firebase.database()
     .ref("rooms/" + roomCode + "/winner")
     .on("value", (snapshot) => {
+
         const winner = snapshot.val();
 
         if (!winner) return;
@@ -265,11 +335,29 @@ function openLobby(roomCode) {
         countdownScreen.classList.add("hidden");
 
         winScreen.classList.remove("hidden");
-        winTitle.textContent = winner;
+
+        winTitle.textContent =
+        winner;
+
+    });
+
+    firebase.database()
+    .ref("rooms/" + roomCode + "/nightResult")
+    .on("value",(snapshot)=>{
+
+        const result = snapshot.val();
+
+        if(!result) return;
+
+        nightSubtitle.textContent =
+        result;
+
     });
 
     loadChat();
+
     listenGamePhase();
+
 }
 
 function listenGamePhase() {
@@ -812,46 +900,91 @@ function disableSelections() {
 }
 
 function finishNight() {
+
     firebase.database()
     .ref("rooms/" + currentRoom)
     .once("value", (snapshot) => {
+
         const room = snapshot.val();
 
-        const protectedPlayer = room.protectedPlayer;
-        const killedPlayer = room.killedPlayer;
+        const protectedPlayer =
+        room.protectedPlayer;
 
-        if (protectedPlayer && killedPlayer && protectedPlayer === killedPlayer) {
-            nightSubtitle.textContent =
-            killedPlayer + " az kalsın öldürülüyordu fakat doktor korudu";
+        const killedPlayer =
+        room.killedPlayer;
+
+        let resultText = "";
+
+        if (
+            protectedPlayer &&
+            killedPlayer &&
+            protectedPlayer === killedPlayer
+        ) {
+
+            resultText =
+            killedPlayer +
+            " az kalsın öldürülüyordu fakat doktor korudu";
+
         }
+
         else if (killedPlayer) {
-            nightSubtitle.textContent = killedPlayer + " öldürüldü";
+
+            resultText =
+            killedPlayer + " öldürüldü";
+
             killPlayerByName(killedPlayer);
-        }
-        else {
-            nightSubtitle.textContent = "Kimse ölmedi";
+
         }
 
-        nightTitle.textContent = "GÜNDÜZ";
+        else {
+
+            resultText =
+            "Kimse ölmedi";
+
+        }
+
+        nightSubtitle.textContent =
+        resultText;
+
+        nightTitle.textContent =
+        "GÜNDÜZ";
+
         nightTimer.textContent = "";
 
+        firebase.database()
+        .ref("rooms/" + currentRoom)
+        .update({
+
+            nightResult: resultText
+
+        });
+
         setTimeout(() => {
+
             nightScreen.classList.add("hidden");
 
             checkWinCondition((gameEnded) => {
+
                 if (gameEnded) return;
 
                 if (isHost) {
+
                     firebase.database()
                     .ref("rooms/" + currentRoom)
                     .update({
+
                         phase: "vote"
+
                     });
+
                 }
+
             });
 
         }, 5000);
+
     });
+
 }
 
 function startVotingPhase() {
